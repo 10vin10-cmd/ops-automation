@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delivery scorecard</title>
+<style>
+:root { --bg:#f5f6f8; --card:#fff; --ink:#18202a; --muted:#5d6874; --line:#dde3e8;
+  --elite:#1e7b4a; --high:#2f6fae; --medium:#a86b00; --low:#b3261e; --good:#1e7b4a; --bad:#b3261e;
+  color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg:#12171c; --card:#1a2229; --ink:#e7edf2;
+  --muted:#9aa7b2; --line:#2d3944; --elite:#6fd39b; --high:#7db6ea; --medium:#f0c062; --low:#f08a82;
+  --good:#6fd39b; --bad:#f08a82; color-scheme: dark; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+main { max-width:1180px; margin:0 auto; padding:2rem 1rem 3rem; }
+h1 { margin:0 0 .2rem; font-size:1.6rem; }
+.sub, .n, .delta.flat { color:var(--muted); }
+.banner { background:var(--card); border:1px dashed var(--line); padding:.6rem .9rem; border-radius:8px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem;
+  margin:1.5rem 0; }
+.tile { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:1rem 1.1rem; }
+.tile header { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
+.tile h2 { font-size:.85rem; font-weight:600; color:var(--muted); margin:0; text-transform:uppercase;
+  letter-spacing:.04em; }
+.value { font-size:1.9rem; font-weight:650; margin:.4rem 0 0; }
+.delta { margin:0; font-size:.88rem; min-height:1.3em; }
+.delta.good { color:var(--good); } .delta.bad { color:var(--bad); }
+.trend { color:var(--high); margin:.4rem 0 0; }
+.spark { width:100%; height:44px; display:block; }
+.n { font-size:.8rem; margin:.2rem 0 0; }
+.chip { font-size:.75rem; font-weight:650; padding:.12rem .55rem; border-radius:999px; white-space:nowrap;
+  color:var(--c); background:color-mix(in srgb, var(--c) 14%, transparent); text-transform:capitalize; }
+.chip.none { --c: var(--muted); }
+section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:1rem 1.1rem;
+  margin-top:1rem; overflow-x:auto; }
+section h2 { font-size:1.05rem; margin:0 0 .6rem; }
+table { border-collapse:collapse; width:100%; font-size:.9rem; }
+th, td { text-align:left; padding:.5rem .6rem; border-bottom:1px solid var(--line); white-space:nowrap; }
+thead th { color:var(--muted); font-weight:600; font-size:.8rem; }
+dl { display:grid; grid-template-columns:max-content 1fr; gap:.35rem 1rem; margin:0; font-size:.9rem; }
+dt { font-weight:600; } dd { margin:0; color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Delivery scorecard</h1>
+  <p class="sub">29 Jul 2026 – 27 Oct 2026 · 3 repositories ·
+    trends are weekly</p>
+  <p class="banner">Sample data, generated to show the dashboard. Run <code>opsctl dora</code> against your repositories for real numbers.</p>
+  <div class="tiles">
+      <article class="tile">
+        <header><h2>Deployment frequency</h2><span class="chip" style="--c:var(--elite)">elite</span></header>
+        <p class="value">3.1 / day</p>
+        <p class="delta good">▲ 21% vs previous period</p>
+        <div class="trend"><svg class="spark" viewBox="0 0 220 44" role="img" aria-label="weekly trend"><path d="M4.0,25.3 L21.7,38.7 L39.3,25.3 L57.0,17.3 L74.7,30.7 L92.3,38.7 L110.0,28.0 L127.7,4.0 L145.3,25.3 L163.0,38.7 L180.7,25.3 L198.3,30.7 L216.0,40.0" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="216.0" cy="40.0" r="3" fill="currentColor"/></svg></div>
+        <p class="n">282 deployments measured</p>
+      </article>
+      <article class="tile">
+        <header><h2>Lead time for changes</h2><span class="chip" style="--c:var(--elite)">elite</span></header>
+        <p class="value">6.9 h</p>
+        <p class="delta flat">→ steady vs previous period</p>
+        <div class="trend"><svg class="spark" viewBox="0 0 220 44" role="img" aria-label="weekly trend"><path d="M4.0,14.3 L21.7,23.0 L39.3,30.1 L57.0,7.7 L74.7,16.7 L92.3,25.4 L110.0,22.8 L127.7,10.5 L145.3,40.0 L163.0,4.0 L180.7,23.3 L198.3,35.5 L216.0,36.0" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="216.0" cy="36.0" r="3" fill="currentColor"/></svg></div>
+        <p class="n">660 changes measured</p>
+      </article>
+      <article class="tile">
+        <header><h2>Change failure rate</h2><span class="chip" style="--c:var(--high)">high</span></header>
+        <p class="value">8%</p>
+        <p class="delta bad">▲ 1 pts vs previous period</p>
+        <div class="trend"><svg class="spark" viewBox="0 0 220 44" role="img" aria-label="weekly trend"><path d="M4.0,40.0 L21.7,29.6 L39.3,18.4 L57.0,26.6 L74.7,15.6 L92.3,21.3 L110.0,4.0 L127.7,34.1 L145.3,32.2 L163.0,20.3 L180.7,25.0 L198.3,31.5 L216.0,28.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="216.0" cy="28.3" r="3" fill="currentColor"/></svg></div>
+        <p class="n">302 deployments measured</p>
+      </article>
+      <article class="tile">
+        <header><h2>Recovery time</h2><span class="chip" style="--c:var(--high)">high</span></header>
+        <p class="value">2.8 h</p>
+        <p class="delta bad">▲ 58% vs previous period</p>
+        <div class="trend"><svg class="spark" viewBox="0 0 220 44" role="img" aria-label="weekly trend"><path d="M21.7,33.5 L39.3,39.8 L57.0,36.9 L74.7,39.0 L92.3,37.4 L110.0,36.4 L127.7,34.9 L145.3,4.0 L163.0,35.3 L180.7,27.0 L198.3,40.0 L216.0,38.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="216.0" cy="38.3" r="3" fill="currentColor"/></svg></div>
+        <p class="n">24 recoveries measured</p>
+      </article>
+  </div>
+  <section aria-labelledby="by-repo"><h2 id="by-repo">By repository</h2>
+    <table><thead><tr><th scope="col">Repository</th><th scope='col'>Deployment frequency</th><th scope='col'>Lead time for changes</th><th scope='col'>Change failure rate</th><th scope='col'>Recovery time</th></tr></thead><tbody><tr><th scope='row'>acme/checkout-api</th><td>2.2 / day <span class="chip" style="--c:var(--elite)">elite</span></td><td>5.1 h <span class="chip" style="--c:var(--elite)">elite</span></td><td>5% <span class="chip" style="--c:var(--high)">high</span></td><td>1.7 h <span class="chip" style="--c:var(--high)">high</span></td></tr><tr><th scope='row'>acme/payments</th><td>5.2 / week <span class="chip" style="--c:var(--high)">high</span></td><td>23.0 h <span class="chip" style="--c:var(--elite)">elite</span></td><td>14% <span class="chip" style="--c:var(--medium)">medium</span></td><td>4.0 h <span class="chip" style="--c:var(--high)">high</span></td></tr><tr><th scope='row'>acme/reporting</th><td>1.1 / week <span class="chip" style="--c:var(--high)">high</span></td><td>4.4 days <span class="chip" style="--c:var(--high)">high</span></td><td>18% <span class="chip" style="--c:var(--low)">low</span></td><td>20.0 h <span class="chip" style="--c:var(--high)">high</span></td></tr></tbody></table>
+  </section>
+  <section aria-labelledby="how"><h2 id="how">How these are measured</h2>
+    <dl>
+      <dt>Deployment frequency</dt><dd>Successful runs of the deploy workflow on the default branch.</dd>
+      <dt>Lead time for changes</dt><dd>Median time from a commit landing on the default branch to the
+        first successful deployment that includes it.</dd>
+      <dt>Change failure rate</dt><dd>Failed deployments, plus successful ones followed within 24 hours
+        by an issue labelled <code>incident</code>, divided by all deployments.</dd>
+      <dt>Recovery time</dt><dd>Median time from a failed deployment to the next successful one, and
+        from an incident being opened to being closed.</dd>
+    </dl>
+  </section>
+  <section aria-labelledby="bands"><h2 id="bands">Performance bands</h2>
+    <p class="n">Defaults follow DORA's 2023 performance clusters; anything worse than medium is low.</p>
+    <table><thead><tr><th></th><th>Elite</th><th>High</th><th>Medium</th></tr></thead><tbody>
+      <tr><th scope="row">Deployment frequency</th><td>≥ 1.0 / day</td><td>≥ 1.0 / week</td><td>≥ 1.0 / month</td></tr>
+      <tr><th scope="row">Lead time</th><td>≤ 24.0 h</td><td>≤ 7.0 days</td><td>≤ 30.0 days</td></tr>
+      <tr><th scope="row">Change failure rate</th><td>≤ 5%</td><td>≤ 10%</td><td>≤ 15%</td></tr>
+      <tr><th scope="row">Recovery time</th><td>≤ 1.0 h</td><td>≤ 24.0 h</td><td>≤ 7.0 days</td></tr>
+    </tbody></table>
+  </section>
+</main>
+</body>
+</html>

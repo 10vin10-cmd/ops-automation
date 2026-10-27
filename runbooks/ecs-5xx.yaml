@@ -1,0 +1,44 @@
+id: ecs-service-5xx
+description: >
+  An ECS service is returning server errors. If it was deployed in the last
+  hour, roll back. Otherwise, if tasks are missing, replace them. If neither
+  explains it, ask a person before scaling out.
+trigger:
+  alarm: "*-5xx"            # alarm names like payments-5xx
+  state: ALARM
+target:
+  cluster: ${dimensions.ClusterName}
+  service: ${dimensions.ServiceName}
+guards:
+  cooldown_minutes: 30      # one run per service per half hour
+  max_runs_per_day: 3       # after that, it's a person's problem
+steps:
+  - id: service
+    check: ecs_service
+    params: {cluster: "${target.cluster}", service: "${target.service}"}
+
+  - id: rollback
+    when: service.last_deploy_age_min < 60 and service.previous_task_definition
+    action: ecs_rollback
+    params: {cluster: "${target.cluster}", service: "${target.service}",
+             to: "${service.previous_task_definition}"}
+
+  - id: restart
+    when: not rollback.ran and service.running < service.desired
+    action: ecs_restart
+    params: {cluster: "${target.cluster}", service: "${target.service}"}
+
+  - id: scale_out
+    when: not rollback.ran and not restart.ran
+    action: ecs_scale
+    requires_approval: true
+    params: {cluster: "${target.cluster}", service: "${target.service}",
+             current: "${service.desired}", factor: 2, max: 8}
+
+  - id: report
+    action: notify
+    params:
+      subject: "${target.service}: 5xx runbook finished"
+      message: >-
+        ${target.service} on ${target.cluster}: rolled back=${rollback.ran},
+        restarted=${restart.ran}, scaled=${scale_out.ran}.

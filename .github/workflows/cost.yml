@@ -1,0 +1,30 @@
+name: Cost and hygiene
+
+# Weekly scan for waste. Dry run unless COST_CLEANUP_APPLY is "true".
+# Needs AWS_ROLE_ARN (read access to EC2 and ELB; plus delete/release
+# permissions if cleanup is applied).
+
+on:
+  schedule:
+    - cron: "29 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  scan:
+    if: vars.AWS_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-south-1' }}
+      - run: pip install -e .
+      - run: opsctl cost scan --out cost.md ${{ vars.COST_CLEANUP_APPLY == 'true' && '--apply' || '' }}

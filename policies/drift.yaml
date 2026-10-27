@@ -1,0 +1,78 @@
+# What to do about each kind of drift. Every rule that matches is considered;
+# the most severe one decides. Order breaks ties.
+#
+# remediation:
+#   revert  put the resource back the way the code says (terraform apply -target)
+#   adopt   the change may be intentional: open an issue to codify it or undo it
+#   notify  report only
+# auto: true lets the tool revert without a person, within the per-run limit.
+# Anything else waits for an explicit approval.
+
+rules:
+  - id: public-ingress
+    description: Security group opened to the internet
+    resource_types: [aws_security_group, aws_security_group_rule,
+                     aws_vpc_security_group_ingress_rule, "AWS::EC2::SecurityGroup",
+                     "AWS::EC2::SecurityGroupIngress"]
+    actual_contains: ["0.0.0.0/0", "::/0"]
+    severity: critical
+    remediation: revert
+    auto: true
+
+  - id: public-bucket
+    description: S3 public access protection switched off
+    resource_types: [aws_s3_bucket_public_access_block, "AWS::S3::Bucket"]
+    attributes: ["block_public_*", "ignore_public_acls", "restrict_public_buckets",
+                 "PublicAccessBlockConfiguration.*"]
+    actual_equals: false
+    severity: critical
+    remediation: revert
+    auto: true
+
+  - id: encryption-weakened
+    description: Encryption settings changed outside code
+    attributes: ["*encrypt*", "*Encrypt*", "*kms*", "*Kms*", "*sse*", "*SSE*"]
+    severity: critical
+    remediation: revert
+    auto: true
+
+  - id: iam-change
+    description: IAM changed outside code
+    resource_types: ["aws_iam_*", "AWS::IAM::*"]
+    severity: high
+    remediation: revert
+    auto: false
+
+  - id: resource-deleted
+    description: Resource deleted outside code
+    status: deleted
+    severity: high
+    remediation: revert
+    auto: false
+
+  - id: capacity-change
+    description: Capacity changed by hand (often during an incident)
+    attributes: [desired_count, desired_capacity, min_size, max_size, instance_type,
+                 DesiredCount, DesiredCapacity, MinSize, MaxSize, InstanceType,
+                 "*.desired_count", "*.instance_type"]
+    severity: medium
+    remediation: adopt
+    auto: false
+
+  - id: tags-only
+    description: Only tags changed
+    tags_only: true
+    severity: low
+    remediation: adopt
+    auto: false
+
+default:
+  id: other-drift
+  description: Drift with no specific rule
+  severity: medium
+  remediation: notify
+  auto: false
+
+guardrails:
+  max_auto_reverts_per_run: 5        # more than this at once smells like a bad plan, not drift
+  protected_tag: "ops:drift"         # value "ignore" excludes a resource

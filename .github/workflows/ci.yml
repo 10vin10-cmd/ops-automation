@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: |
+          pip install -e ".[dev]"
+          npm install -g aws-cdk@2
+      - run: ruff check .
+      - run: pytest
+      - name: Synthesize the runbook stack
+        run: cdk synth --quiet
+      - name: Demo (mocked AWS account)
+        run: |
+          opsctl demo --out-dir demo-output
+          for f in drift runbooks cost scorecard; do cat demo-output/$f.md >> "$GITHUB_STEP_SUMMARY"; echo >> "$GITHUB_STEP_SUMMARY"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-output
+          path: demo-output/

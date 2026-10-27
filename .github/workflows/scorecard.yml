@@ -1,0 +1,37 @@
+name: Delivery scorecard
+
+# Weekly DORA scorecard for the repositories in the SCORECARD_REPOS variable
+# (comma-separated owner/name), defaulting to this owner's project repos.
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"   # Mondays 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: Build the scorecard
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOS: ${{ vars.SCORECARD_REPOS || format('{0}/cicd-automation,{0}/document-ingestion-reference,{0}/ops-automation', github.repository_owner) }}
+        run: |
+          args=()
+          IFS=',' read -ra list <<< "$REPOS"
+          for r in "${list[@]}"; do args+=(--repo "$r"); done
+          opsctl dora "${args[@]}" --days 90 --workflow "${{ vars.DEPLOY_WORKFLOW || 'release.yml' }}" --html scorecard.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scorecard
+          path: scorecard.html

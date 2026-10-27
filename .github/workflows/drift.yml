@@ -1,0 +1,44 @@
+name: Drift
+
+# Daily drift check of a Terraform configuration. Configure with repository
+# variables: AWS_ROLE_ARN (OIDC role with read access, plus write access if
+# DRIFT_AUTO_REVERT is "true"), AWS_REGION, TF_DIR. Without them it is skipped.
+# Reverts only happen for rules marked auto in policies/drift.yaml, and only
+# when DRIFT_AUTO_REVERT is "true". Everything else is reported.
+
+on:
+  schedule:
+    - cron: "43 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  drift:
+    if: vars.AWS_ROLE_ARN != '' && vars.TF_DIR != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-south-1' }}
+      - run: pip install -e .
+      - name: Refresh-only plan
+        working-directory: ${{ vars.TF_DIR }}
+        run: |
+          terraform init -input=false
+          terraform plan -refresh-only -input=false -out=drift.tfplan
+          terraform show -json drift.tfplan > "$GITHUB_WORKSPACE/drift.json"
+      - name: Classify and remediate
+        run: >
+          opsctl drift terraform drift.json --workdir "${{ vars.TF_DIR }}" --out drift.md
+          ${{ vars.DRIFT_AUTO_REVERT == 'true' && '--apply' || '' }}
