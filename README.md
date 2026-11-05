@@ -11,6 +11,45 @@ Platform operations that run themselves, within limits a person sets. `opsctl` h
 | **[Incident runbooks](#incident-runbooks)** | CloudWatch alarms trigger YAML runbooks: check, then roll back, restart or scale | Cooldowns, daily limits, approval gates that re-check, capacity ceilings, audit trail, dry run |
 | **[Cost and hygiene](#cost-and-hygiene)** | Unattached volumes, stale snapshots, idle IPs and load balancers, long-stopped instances, missing tags | Dry run by default, `ops:keep` tag, backup before delete, never terminates, action limit |
 
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph sources ["Inputs"]
+        tf["Terraform<br/>refresh-only plan JSON"]
+        cfn["CloudFormation<br/>drift detection"]
+        gh["GitHub API<br/>deploy runs · commits · incidents"]
+        alarm["CloudWatch alarm<br/>state change"]
+        acct["AWS account<br/>EC2 · EBS · EIP · ELB"]
+    end
+
+    subgraph opsctl ["opsctl"]
+        drift["Drift<br/>policy → revert · approve · codify"]
+        dora["DORA<br/>four metrics + bands"]
+        rb["Runbook engine<br/>checks → guarded actions"]
+        cost["Cost scan<br/>findings → safe cleanup"]
+    end
+
+    tf & cfn --> drift
+    gh --> dora
+    acct --> cost
+    alarm --> eb["EventBridge rule"] --> lambda["Engine λ<br/>concurrency 5 · DLQ"] --> rb
+
+    drift -->|"targeted apply<br/>(auto rules, or approved)"| apply["terraform apply -target"]
+    dora --> html["HTML scorecard<br/>+ job summary"]
+    rb <-->|"locks · daily counts<br/>executions · audit"| ddb[("DynamoDB")]
+    rb -->|"rollback · restart · scale"| ecs["Amazon ECS"]
+    rb -->|"notices · approval requests"| sns["SNS"]
+    sns -.->|"opsctl runbook approve"| rb
+    cost -->|"snapshot → delete,<br/>release IP"| acct
+
+    policy[/"policies/drift.yaml"/] -.-> drift
+    books[/"runbooks/*.yaml"/] -.-> rb
+    gha["GitHub Actions<br/>daily drift · weekly cost and scorecard"] -.->|schedules| drift & cost & dora
+```
+
+Each module stays read-only until a guardrail allows it to act: a policy rule marked `auto`, an approval, or `--apply` / `dryRun=false`.
+
 Everything runs offline against a mocked AWS account, with no credentials:
 
 ```bash
